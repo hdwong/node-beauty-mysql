@@ -1,0 +1,27 @@
+{
+  "name": "node-beauty-mysql",
+  "version": "1.0.0",
+  "description": "Mysql module for node-beauty",
+  "private": false,
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hdwong/node-beauty-mysql.git"
+  },
+  "dependencies": {
+    "mysql": "*"
+  },
+  "keywords": [
+    "node-beauty",
+    "mysql"
+  ],
+  "author": "Bun Wong <bunwong@qq.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hdwong/node-beauty-mysql/issues"
+  },
+  "homepage": "https://github.com/hdwong/node-beauty-mysql#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
