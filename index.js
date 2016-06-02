@@ -15,22 +15,24 @@ let funcGetConnection = (poolGroup, callback) => {
   });
 };
 
+let serviceName = 'mysql';
 let mysql = {
   assert: (error) => {
     if (error) {
       logger.error(error);
-      throw '[mysql] ' + error;
+      throw '[' + serviceName + '] ' + error;
     }
   },
-  init: (c, callback) => {
+  init: (name, c, callback) => {
+    serviceName = name;
     core = c;
-    logger = core.getLogger('mysql');
-    loggerQuery = core.getLogger('mysql-query');
-    config = core.getConfig('mysql');
+    logger = core.getLogger(serviceName);
+    loggerQuery = core.getLogger(serviceName + '-query');
+    config = core.getConfig(serviceName);
     if (config.master) {
       poolCluster.add('MASTER', config.master);
     } else {
-      throw '找不到 MASTER 配置';
+      throw 'MASTER config not found.';
     }
     if (config.slave && _.isArray(config.slave) && config.slave.length) {
       _.forEach(config.slave, (slave, index) => {
@@ -50,7 +52,7 @@ let mysql = {
   format: m.format,
   post_query: (req, res, next) => {
     if (!req.body || req.body.sql === undefined) {
-      throw '参数错误';
+      throw 'Params is wrong';
     }
     mysql.query(req.body.sql, next);
   },
