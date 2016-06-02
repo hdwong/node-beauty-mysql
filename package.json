@@ -1,6 +1,6 @@
 {
   "name": "node-beauty-mysql",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Mysql module for node-beauty",
   "private": false,
   "main": "index.js",

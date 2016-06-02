@@ -56,7 +56,7 @@ let mysql = {
     }
     mysql.query(req.body.sql, next);
   },
-  query: (sql, params, callback) => {
+  query: function(sql, params, callback) {
     if (arguments.length <= 2) {
       callback = params;
     } else {
