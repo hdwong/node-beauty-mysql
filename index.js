@@ -1,33 +1,31 @@
-var core, config, logger, loggerQuery,
+"use strict";
+const GROUP_MASTER = 1, GROUP_SLAVE = 2;
+let core, config, logger, loggerQuery,
     _ = require('lodash'), m = require('mysql'),
     poolCluster = m.createPoolCluster(), hasSlave = false;
-var group = {
-  MASTER: 1,
-  SLAVE: 2
-};
-var funcGetConnection = function(poolGroup, callback) {
-  if (poolGroup == group.SLAVE) {
+let funcGetConnection = (poolGroup, callback) => {
+  if (poolGroup == GROUP_SLAVE) {
     poolGroup = hasSlave ? 'SLAVE*' : 'MASTER';
   } else {
     poolGroup = 'MASTER';
   }
-  poolCluster.getConnection(poolGroup, function(error, connection) {
+  poolCluster.getConnection(poolGroup, (error, connection) => {
     mysql.assert(error);
     callback(connection);
   });
 };
 
-var mysql = {
-  assert: function(error) {
+let mysql = {
+  assert: (error) => {
     if (error) {
       logger.error(error);
       throw '[mysql] ' + error;
     }
   },
-  init: function(c, callback) {
+  init: (c, callback) => {
     core = c;
-    // logger = core.getLogger('mysql');
-    // loggerQuery = core.getLogger('mysql-query');
+    logger = core.getLogger('mysql');
+    loggerQuery = core.getLogger('mysql-query');
     config = core.getConfig('mysql');
     if (config.master) {
       poolCluster.add('MASTER', config.master);
@@ -35,27 +33,42 @@ var mysql = {
       throw '找不到 MASTER 配置';
     }
     if (config.slave && _.isArray(config.slave) && config.slave.length) {
-      _.each(config.slave, function(slave, index) {
+      _.forEach(config.slave, (slave, index) => {
         poolCluster.add('SLAVE-' + (index + 1), slave);
       });
       hasSlave = true;
     }
+    if (!config.enable_api) {
+      // disable query api
+      delete mysql.post_query;
+    }
     callback();
   },
-  uninit: function() {
+  uninit: () => {
     poolCluster.end();
   },
   format: m.format,
-  query: function(sql, callback) {
-    var isRead = /^\s*(?:SELECT|SHOW)\s/i.test(sql),
-        poolGroup = isRead ? group.SLAVE : group.MASTER;
-    funcGetConnection(poolGroup, function(connection) {
-      var timeStart = new Date().getTime();
-      connection.query(sql, function(error, result) {
-        var timeDiff = (new Date().getTime() - timeStart).toString();
-        connection.release();
+  post_query: (req, res, next) => {
+    if (!req.body || req.body.sql === undefined) {
+      throw '参数错误';
+    }
+    mysql.query(req.body.sql, next);
+  },
+  query: (sql, params, callback) => {
+    if (arguments.length <= 2) {
+      callback = params;
+    } else {
+      sql = m.format(sql, params);
+    }
+    let isRead = /^\s*(?:SELECT|SHOW)\s/i.test(sql),
+        poolGroup = isRead ? GROUP_SLAVE : GROUP_MASTER;
+    funcGetConnection(poolGroup, (conn) => {
+      let timer = new Date().getTime();
+      conn.query(sql, (error, result) => {
+        timer = (new Date().getTime() - timer).toString();
+        conn.release();
         if (config.log_query) {
-          loggerQuery.info('(' + timeDiff + 'ms) [' + sql + '] (' + timeDiff + 'ms)');
+          loggerQuery.info('(' + timer + 'ms) [' + sql + ']');
         }
         mysql.assert(error);
         return typeof callback === 'function' ? callback(result): null;
