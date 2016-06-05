@@ -1,2 +1,9 @@
 # node-beauty-mysql
-Mysql module for node-beauty
+
+## Install
+
+    $ npm install node-beauty－mysql
+
+## API
+
+For full details, see http://www.hdwong.com/node-beauty/mysql
