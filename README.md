@@ -2,7 +2,7 @@
 
 ## Install
 
-    $ npm install node-beauty－mysql
+    $ npm install node-beauty-mysql
 
 ## API
 
