@@ -62,18 +62,23 @@ let mysql = {
     } else {
       sql = m.format(sql, params);
     }
-    let isRead = /^\s*(?:SELECT|SHOW)\s/i.test(sql),
-        poolGroup = isRead ? GROUP_SLAVE : GROUP_MASTER;
+    let isWrite = /^\s*(?:SET|INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|TRUNCATE|LOAD|COPY|ALTER|RENAME|GRANT|REVOKE|LOCK|UNLOCK|REINDEX)\s/i.test(sql),
+        poolGroup = isWrite ? GROUP_MASTER : GROUP_SLAVE;
     funcGetConnection(poolGroup, (conn) => {
       let timer = new Date().getTime();
       conn.query(sql, (error, result) => {
-        timer = (new Date().getTime() - timer).toString();
+        timer = new Date().getTime() - timer;
         conn.release();
         if (config.log_query) {
-          loggerQuery.info('(' + timer + 'ms) [' + sql + ']');
+          loggerQuery.info('(' + timer.toString() + 'ms) [' + sql + ']');
         }
         mysql.assert(error);
-        return typeof callback === 'function' ? callback(result): null;
+
+        return typeof callback === 'function' ? callback({
+          sql: sql,
+          timer: timer,
+          result: result
+        }) : null;
       });
     });
   }
