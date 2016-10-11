@@ -17,8 +17,11 @@ let funcGetConnection = (poolGroup, callback) => {
 
 let serviceName = 'mysql';
 let mysql = {
-  assert: (error) => {
+  assert: (error, sql) => {
     if (error) {
+      if (sql) {
+        logger.error('Error sql: [' + sql + ']');
+      }
       logger.error(error);
       throw '[' + serviceName + '] ' + error;
     }
@@ -72,7 +75,7 @@ let mysql = {
         if (config.log_query) {
           loggerQuery.info('(' + timer.toString() + 'ms) [' + sql + ']');
         }
-        mysql.assert(error);
+        mysql.assert(error, sql);
 
         return typeof callback === 'function' ? callback({
           sql: sql,
